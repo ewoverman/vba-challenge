@@ -1,0 +1,165 @@
+Sub Stocks():
+
+Dim j As Integer
+Dim ws_num As Integer
+
+Dim starting_ws As Worksheet
+Set starting_ws = ActiveSheet
+ws_num = ThisWorkbook.Worksheets.Count
+
+For j = 1 To ws_num
+    ThisWorkbook.Worksheets(j).Activate
+    
+'Lable new columns
+Worksheets(j).Range("I1") = "Ticker"
+Worksheets(j).Range("J1") = "Yearly Change"
+Worksheets(j).Range("K1") = "Percent Change"
+Worksheets(j).Range("L1") = "Total Stock Volume"
+Worksheets(j).Range("O1") = "Ticker"
+Worksheets(j).Range("P1") = "Value"
+Worksheets(j).Range("N2") = "Greatest % Increase"
+Worksheets(j).Range("N3") = "Greastes % Decrease"
+Worksheets(j).Range("N4") = "Greatest Total Volume"
+
+'Set initial variable for holding ticker, yearly change, percent change and total volume
+Dim Ticker As String
+Dim Yearly_Change As Double
+Dim Percent_Change As Double
+Dim Total_Volume As Double
+Dim Yearly_Open As Double
+Dim Yearly_Close As Double
+Dim Increase_Ticker As String
+Dim Increase_Value As Double
+Dim Decrease_Ticker As String
+Dim Decrease_Value As Double
+Dim Greatest_Ticker As String
+Dim Greatest_Value As Double
+
+
+'Set inital variable for holding Total Volume total
+Total_Volume = 0
+
+'Find last row
+lastrow = Worksheets(j).Cells(Rows.Count, 1).End(xlUp).Row
+
+'Keep track of location of ticker in Summary Table
+Dim Summary_Table As Integer
+Summary_Table = 2
+
+'Adding the first ticker open price
+Yearly_Open = Worksheets(j).Cells(2, 3).Value
+
+
+'Loop through all Tickers
+For i = 2 To lastrow
+
+    'Check if we are still in the same ticker
+    If Worksheets(j).Cells(i + 1, 1).Value <> Worksheets(j).Cells(i, 1).Value Then
+
+        'Set Ticker name
+        Ticker = Worksheets(j).Cells(i, 1).Value
+        
+        'Set Yearly Close price
+        Yearly_Close = Worksheets(j).Cells(i, 6).Value
+        
+        'Add to Total Stock Volume
+        Total_Volume = Total_Volume + Worksheets(j).Cells(i, 7).Value
+        
+        'Calculate the difference
+        Yearly_Change = Yearly_Close - Yearly_Open
+        
+        'Calculate percentage change
+        If Yearly_Open > 0 Then
+            Percent_Change = (Yearly_Change / Yearly_Open)
+        Else: Percent_Change = 0
+        End If
+        
+        'write out percent change
+        'FormatPercent( Expression, [NumDigitsAfterDecimal], [IncludeLeadingDigit], [UseParensForNegativeNumbers], [GroupDigits] )
+        Worksheets(j).Range("K" & Summary_Table).Value = FormatPercent(Percent_Change, 2, vbTrue)
+                
+        'write out yearly change
+        Worksheets(j).Range("J" & Summary_Table).Value = Yearly_Change
+            If Yearly_Change < 0 Then
+                Worksheets(j).Range("J" & Summary_Table).Interior.ColorIndex = 3
+            ElseIf Yearly_Change > 0 Then
+                Worksheets(j).Range("J" & Summary_Table).Interior.ColorIndex = 4
+            End If
+        
+        'Print ticker sign in the Ticker column
+        Worksheets(j).Range("I" & Summary_Table).Value = Ticker
+        
+        'Print Total to Summary Table
+        Worksheets(j).Range("L" & Summary_Table).Value = Total_Volume
+        
+        'Add one to the summary table row
+        Summary_Table = Summary_Table + 1
+        
+        'Finding Greatest values
+        If Greatest_Value < Total_Volume Then
+            Greatest_Value = Total_Volume
+            Greatest_Ticker = Ticker
+        End If
+
+        If Increase_Value < Percent_Change Then
+            Increase_Value = Percent_Change
+            Increase_Ticker = Ticker
+        End If
+                        
+        If Decrease_Value > Percent_Change Then
+            Decrease_Value = Percent_Change
+            Decrease_Ticker = Ticker
+        End If
+              
+        'Reset the Total_Volume
+        Total_Volume = 0
+        
+        'get the next open value now!!!
+        Yearly_Open = Worksheets(j).Cells(i + 1, 3).Value
+   
+        
+        
+        'If the cell immediately following a row is the same ticker
+    Else
+        
+        'Add to the Total Volume
+        Total_Volume = Total_Volume + Worksheets(j).Cells(i, 7).Value
+        
+    End If
+
+    Next i
+        
+      'Print greatest values
+      Worksheets(j).Range("o2") = Increase_Ticker
+      Worksheets(j).Range("p2") = FormatPercent(Increase_Value, 2, vbTrue)
+      Worksheets(j).Range("o3") = Decrease_Ticker
+      Worksheets(j).Range("p3") = FormatPercent(Decrease_Value, 2, vbTrue)
+      Worksheets(j).Range("o4") = Greatest_Ticker
+      Worksheets(j).Range("p4") = Greatest_Value
+      
+        'zero out all variables
+        Ticker = ""
+        Yearly_Change = 0
+        Percent_Change = 0
+        Total_Volume = 0
+        Yearly_Open = 0
+        Yearly_Close = 0
+        Increase_Ticker = ""
+        Increase_Value = 0
+        Decrease_Ticker = ""
+        Decrease_Value = 0
+        Greatest_Ticker = ""
+        Greatest_Value = 0
+     
+  'set cell A1 of each sheet to "1"
+  ThisWorkbook.Worksheets(j).Cells(1, 1) = 1
+Next
+
+
+'activate the worksheet that was originally active
+starting_ws.Activate
+      
+      
+End Sub
+
+
